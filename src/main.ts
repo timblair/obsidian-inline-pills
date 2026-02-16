@@ -13,10 +13,22 @@ export default class InlinePillsPlugin extends Plugin {
 
 					nodeList.forEach(node => {
 						if (!node.parentElement) return;
-						node.parentElement.innerHTML = node.parentElement.innerHTML.replace(
-							/\{\{([^}]+)\}\}/g,
-							(match, label): string => createPillElement(label).outerHTML
-						);
+						const text = node.textContent ?? "";
+						const pattern = /\{\{([^}]+)\}\}/g;
+						const fragment = document.createDocumentFragment();
+						let lastIndex = 0;
+						let match;
+						while ((match = pattern.exec(text)) !== null) {
+							if (match.index > lastIndex) {
+								fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+							}
+							fragment.appendChild(createPillElement(match[1] ?? ""));
+							lastIndex = match.index + match[0].length;
+						}
+						if (lastIndex < text.length) {
+							fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+						}
+						node.parentElement.replaceChild(fragment, node);
 					});
 				}
 			}
