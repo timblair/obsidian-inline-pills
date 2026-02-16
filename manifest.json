@@ -1,10 +1,10 @@
 {
 	"id": "inline-pills",
 	"name": "Inline Pills",
-	"version": "0.0.1",
+	"version": "1.0.0-beta.1",
 	"minAppVersion": "0.15.0",
 	"description": "Renders {{label}} syntax as colour-coded inline pills in Reading view and Live Preview.",
 	"author": "Tim Blair",
-	"authorUrl": "https://tim.bla.ir/",
+	"authorUrl": "https://github.com/timblair",
 	"isDesktopOnly": false
 }
