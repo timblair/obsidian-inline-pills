@@ -47,33 +47,51 @@ npm run lint
 
 ```
 src/
-  main.ts        # Plugin entry point, post-processor registration, colour logic
-styles.css       # .inline-pill styles
-manifest.json    # Plugin metadata
+  main.ts              # Plugin entry point and lifecycle (onload, post-processor registration)
+  editor-extension.ts  # CodeMirror 6 ViewPlugin for Live Preview rendering
+  colour.ts            # Hash → HSL → RGB → hex utilities, shared constants, createPillElement()
+styles.css             # .inline-pill styles
+manifest.json          # Plugin metadata
 ```
 
 ### Suggested structure as the plugin grows
 
 ```
 src/
-  main.ts        # Plugin entry point and lifecycle only
-  processor.ts   # Markdown post-processor logic
-  colour.ts      # Hash → HSL → RGB → hex colour utilities
-  settings.ts    # Settings interface, defaults, and settings tab
+  main.ts              # Plugin entry point and lifecycle only
+  editor-extension.ts  # CM6 ViewPlugin for Live Preview
+  colour.ts            # Colour utilities and pill DOM factory
+  settings.ts          # Settings interface, defaults, and settings tab
 ```
 
 ## Plugin mechanics
 
-The core behaviour is a `MarkdownPostProcessor` registered in `onload()`:
+Pills are rendered in two contexts, both using `createPillElement(label)` from `colour.ts`:
+
+### Reading view (`main.ts`)
+
+A `MarkdownPostProcessor` registered in `onload()`:
 
 1. Checks if the rendered element contains `{{`.
 2. Recursively finds all text nodes (via `findTextNode`) containing `{{`.
-3. For each text node, replaces `{{label}}` patterns in the parent element's `innerHTML` with a styled `<span class="inline-pill">`.
-4. Background and foreground colours are generated via `hashToHex(getHash(label), saturation, lightness)`.
+3. Replaces `{{label}}` patterns in the parent element's `innerHTML` with `createPillElement(label).outerHTML`.
 
-**Colour constants** (in `main.ts`):
-- `dark = [0.5, 0.35]` — used for background colour (saturation, lightness)
-- `light = [0.9, 0.9]` — used for foreground colour (saturation, lightness)
+### Live Preview / editing view (`editor-extension.ts`)
+
+A CodeMirror 6 `ViewPlugin` registered via `this.registerEditorExtension()`:
+
+1. On each document change, cursor move, or viewport change, scans visible ranges for `{{label}}` patterns.
+2. For each match, checks whether any cursor or selection overlaps the range.
+3. If the cursor is **outside** the range, replaces it with a `PillWidget` (renders via `createPillElement`).
+4. If the cursor is **inside** the range, the raw `{{label}}` text is shown for editing.
+
+### Shared colour utilities (`colour.ts`)
+
+- `getHash(str)` → deterministic number from label text
+- `hashToHex(hash, saturation, lightness)` → hex colour string
+- `createPillElement(label)` → styled `<span class="inline-pill">` element
+- `PILL_DARK: [0.5, 0.35]` — background colour (saturation, lightness)
+- `PILL_LIGHT: [0.9, 0.9]` — foreground colour (saturation, lightness)
 
 ## Manifest rules (`manifest.json`)
 
@@ -117,19 +135,31 @@ To test the plugin, add `{{SomeLabel}}` to any note. The text should render as a
 - Never introduce network calls without a clear user-facing reason, explicit opt-in, and documentation.
 - Read/write only what is necessary within the vault.
 
+## Git workflow
+
+- **Always work in a feature branch** — never commit directly to `main`. Create a branch for each piece of work: `git checkout -b <feature-name>`.
+- **Never commit until work is verified** — do not commit changes until the user has confirmed the feature is working correctly, or has explicitly asked you to commit.
+- Merge to `main` only when the user instructs it.
+
 ## Agent do/don't
 
 **Do**
 - Keep colour generation deterministic — the same label must always produce the same colour.
-- Use `this.registerMarkdownPostProcessor` for all post-processing; don't manipulate the DOM outside of it.
+- Use `createPillElement(label)` from `colour.ts` as the single source of truth for pill DOM creation.
+- Keep `PILL_DARK` and `PILL_LIGHT` constants in `colour.ts` — never duplicate them elsewhere.
+- Use `this.registerMarkdownPostProcessor` for Reading view post-processing.
+- Use `this.registerEditorExtension` for Live Preview (CM6) extensions.
 - Write idempotent processing — reloading the plugin should not double-process already-rendered pills.
 - Use `this.register*` helpers for anything needing cleanup.
+- When modifying the CM6 extension, always rebuild (`npm run build`) and reload Obsidian to test — changes to `editor-extension.ts` are not reflected until `main.js` is rebuilt.
 
 **Don't**
 - Introduce network calls or external dependencies.
 - Commit `main.js`, `node_modules/`, or `.hotreload`.
 - Change the plugin `id` in `manifest.json`.
 - Use `console.log` in production code — remove debug logging before release.
+- Duplicate pill DOM creation logic — always use `createPillElement()`.
+- Mark `@codemirror/*` packages as bundled dependencies — they must remain external (provided by Obsidian at runtime).
 
 ## References
 

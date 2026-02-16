@@ -12,6 +12,8 @@ Status: {{In Progress}}  {{Blocked}}  {{Done}}
 
 Each label is assigned a colour deterministically from its text, so the same label always renders with the same colour across all your notes.
 
+Pills are rendered in both **Reading view** and **Live Preview** (editing) mode. In Live Preview, moving your cursor inside a `{{label}}` reveals the raw syntax for editing; moving away renders the pill again.
+
 ## Installation
 
 ### Manual
@@ -39,7 +41,7 @@ npm install
 npm run dev
 ```
 
-This compiles `src/main.ts` to `main.js` and watches for changes. To test, copy `main.js`, `manifest.json`, and `styles.css` into your vault's plugin folder and reload Obsidian.
+This compiles `src/main.ts` to `main.js` and watches for changes. Since the repo lives directly in your vault's plugin folder, reload Obsidian to pick up changes.
 
 ### Production build
 
