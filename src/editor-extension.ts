@@ -1,6 +1,6 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
 import { Range } from "@codemirror/state";
-import { getHash, hashToHex, PILL_DARK, PILL_LIGHT } from "./colour";
+import { createPillElement } from "./colour";
 
 class PillWidget extends WidgetType {
 	constructor(readonly label: string) {
@@ -12,13 +12,7 @@ class PillWidget extends WidgetType {
 	}
 
 	toDOM(): HTMLElement {
-		const hash = getHash(this.label);
-		const span = document.createElement("span");
-		span.className = "inline-pill";
-		span.style.backgroundColor = hashToHex(hash, ...PILL_DARK);
-		span.style.color = hashToHex(hash, ...PILL_LIGHT);
-		span.textContent = this.label.toUpperCase();
-		return span;
+		return createPillElement(this.label);
 	}
 
 	ignoreEvent(): boolean {

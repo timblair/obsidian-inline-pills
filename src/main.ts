@@ -1,5 +1,5 @@
 import { Plugin, MarkdownPostProcessorContext } from "obsidian";
-import { getHash, hashToHex, PILL_DARK, PILL_LIGHT } from "./colour";
+import { createPillElement } from "./colour";
 import { pillViewPlugin } from "./editor-extension";
 
 export default class InlinePillsPlugin extends Plugin {
@@ -14,20 +14,8 @@ export default class InlinePillsPlugin extends Plugin {
 					nodeList.forEach(node => {
 						if (!node.parentElement) return;
 						node.parentElement.innerHTML = node.parentElement.innerHTML.replace(
-							/{{([^}]+)}}/g,
-							(match, label): string => {
-								const hash = getHash(label);
-								const bg = hashToHex(hash, ...PILL_DARK);
-								const fg = hashToHex(hash, ...PILL_LIGHT);
-
-								const container = createDiv();
-								const span = container.createSpan({ cls: "inline-pill" });
-								span.style.backgroundColor = bg;
-								span.style.color = fg;
-								span.innerText = label.toUpperCase();
-
-								return span.parentElement?.innerHTML ?? "";
-							}
+							/\{\{([^}]+)\}\}/g,
+							(match, label): string => createPillElement(label).outerHTML
 						);
 					});
 				}
