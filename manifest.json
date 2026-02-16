@@ -3,7 +3,7 @@
 	"name": "Inline Pills",
 	"version": "0.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Automatic inline pills",
+	"description": "Renders {{label}} syntax as colour-coded inline pills in Reading view and Live Preview.",
 	"author": "Tim Blair",
 	"authorUrl": "https://tim.bla.ir/",
 	"isDesktopOnly": false
