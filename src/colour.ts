@@ -6,7 +6,7 @@ export function mod(n: number, m: number): number {
 }
 
 export function hashToHsl(hash: number, saturation: number, lightness: number): [number, number, number] {
-	return [mod(~~(360 * hash), 360), saturation, lightness];
+	return [mod(hash * 137, 360), saturation, lightness];
 }
 
 export function getHash(str: string): number {
