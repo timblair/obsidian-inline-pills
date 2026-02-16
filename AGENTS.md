@@ -102,9 +102,12 @@ A CodeMirror 6 `ViewPlugin` registered via `this.registerEditorExtension()`:
 
 ## Versioning & releases
 
-- Bump version via `npm version <patch|minor|major>` — this runs `version-bump.mjs` automatically, updating `manifest.json` and `versions.json`.
-- Create a GitHub release whose tag exactly matches the version in `manifest.json`. **No leading `v`.**
-- Attach `main.js`, `manifest.json`, and `styles.css` as release assets.
+- Bump version via `npm version <patch|minor|major>` — this runs `version-bump.mjs` automatically, updating `manifest.json` and `versions.json`, and creates a git tag.
+- Push both the commit and the tag: `git push && git push --tags`.
+- GitHub Actions (`.github/workflows/release.yml`) will trigger on the tag push, build the plugin, and create a **draft** GitHub release with `main.js`, `manifest.json`, and `styles.css` attached.
+- Edit the draft release on GitHub to add release notes, then publish it.
+- The release tag must exactly match the version in `manifest.json`. **No leading `v`.**
+- Ensure "Read and write permissions" is enabled under **GitHub → Settings → Actions → General → Workflow permissions**.
 
 ## Testing
 

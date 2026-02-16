@@ -57,7 +57,9 @@ npm run lint
 
 ## Releasing
 
+Releases are automated via GitHub Actions. When a tag is pushed, the workflow builds the plugin and creates a draft GitHub release with `main.js`, `manifest.json`, and `styles.css` attached.
+
 1. Update `minAppVersion` in `manifest.json` if the release requires a newer Obsidian API.
-2. Run `npm version patch` (or `minor` / `major`) — this automatically updates the version in `manifest.json` and `versions.json`.
-3. Create a GitHub release with a tag that exactly matches the version (no leading `v`).
-4. Attach `main.js`, `manifest.json`, and `styles.css` as release assets.
+2. Run `npm version patch` (or `minor` / `major`) — this updates the version in `manifest.json` and `versions.json` and creates a git tag.
+3. Push the commit and the tag: `git push && git push --tags`
+4. The GitHub Actions workflow will create a draft release — edit it to add release notes and publish.
