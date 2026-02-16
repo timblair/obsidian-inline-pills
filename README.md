@@ -18,6 +18,18 @@ Pills are rendered in both **Reading view** and **Live Preview** (editing) mode.
 
 ## Installation
 
+### Via BRAT
+
+[BRAT](https://github.com/TfTHacker/obsidian42-brat) (Beta Reviewers Auto-update Tool) lets you install and auto-update plugins that aren't yet in the Obsidian community plugin directory.
+
+1. Install the [BRAT plugin](https://obsidian.md/plugins?id=obsidian42-brat) from the Obsidian community plugins directory.
+2. Open BRAT settings and click **Add Beta plugin**.
+3. Enter the repository slug: `timblair/obsidian-inline-pills`
+4. Select "Latest version" from the "Select a version" dropdown.
+5. Click **Add Plugin**. BRAT will download and enable Inline Pills automatically.
+
+BRAT will notify you when new versions are available and can update the plugin for you.
+
 ### Manual
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](../../releases/latest).
