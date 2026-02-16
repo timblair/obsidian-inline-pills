@@ -2,6 +2,8 @@
 
 An [Obsidian](https://obsidian.md) plugin that renders `{{label}}` syntax as styled inline pill elements in your notes.
 
+![Pill examples](.github/pill-examples.png)
+
 ## Usage
 
 Wrap any text in double curly braces and it will be rendered as a coloured pill:
