@@ -152,6 +152,11 @@ To test the plugin, add `{{SomeLabel}}` to any note. The text should render as a
 - Write idempotent processing — reloading the plugin should not double-process already-rendered pills.
 - Use `this.register*` helpers for anything needing cleanup.
 - When modifying the CM6 extension, always rebuild (`npm run build`) and reload Obsidian to test — changes to `editor-extension.ts` are not reflected until `main.js` is rebuilt.
+- Use `createEl()`, `createDiv()`, `createSpan()` Obsidian helpers for DOM construction in preference to `innerHTML`/`outerHTML`.
+- Use CSS classes and Obsidian CSS variables for styling where possible. Inline styles are acceptable only for dynamically computed values (e.g. per-label colours).
+- Use `async`/`await` over promise chains.
+- Use `const`/`let`, never `var`.
+- Use `getActiveViewOfType()` instead of `workspace.activeLeaf` if editor access is needed.
 
 **Don't**
 - Introduce network calls or external dependencies.
@@ -160,6 +165,23 @@ To test the plugin, add `{{SomeLabel}}` to any note. The text should render as a
 - Use `console.log` in production code — remove debug logging before release.
 - Duplicate pill DOM creation logic — always use `createPillElement()`.
 - Mark `@codemirror/*` packages as bundled dependencies — they must remain external (provided by Obsidian at runtime).
+- Use Node.js or Electron APIs (`fs`, `crypto`, `os`, etc.) — the plugin must remain mobile-compatible (`isDesktopOnly: false`).
+- Use lookbehind regex patterns — not supported on iOS.
+- Add default hotkeys to commands — this conflicts with user-defined shortcuts.
+- Obfuscate code or introduce client-side tracking/analytics.
+- Add automatic update mechanisms outside of Obsidian's plugin system.
+
+## Community plugin submission checklist
+
+Before submitting to the Obsidian community plugin list:
+
+- [ ] `manifest.json` description: starts with an action verb, ends with a period, under 250 chars, no emoji, no "This is a plugin", correct capitalisation ("Obsidian", "Markdown", etc.)
+- [ ] `manifest.json` has no `fundingUrl` unless donations are accepted.
+- [ ] `minAppVersion` reflects the earliest Obsidian version the plugin genuinely supports.
+- [ ] All sample/placeholder code removed.
+- [ ] No `console.log` debug output in production builds.
+- [ ] LICENSE file present with correct attribution.
+- [ ] README documents any remote service usage, file access beyond vault, or payment requirements.
 
 ## References
 
