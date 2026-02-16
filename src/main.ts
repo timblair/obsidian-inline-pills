@@ -37,6 +37,12 @@ export default class InlinePillsPlugin extends Plugin {
 
 	findTextNode(el: Node, search?: string): Node[] {
 		const list: Node[] = [];
+
+		if (el.nodeType === Node.ELEMENT_NODE) {
+			const tag = (el as Element).tagName;
+			if (tag === "CODE" || tag === "PRE") return list;
+		}
+
 		if (
 			el.nodeType == 3 &&
 			el.textContent !== null &&

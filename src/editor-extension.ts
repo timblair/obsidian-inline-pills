@@ -1,5 +1,6 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
 import { Range } from "@codemirror/state";
+import { syntaxTree } from "@codemirror/language";
 import { createPillElement } from "./colour";
 
 class PillWidget extends WidgetType {
@@ -20,6 +21,16 @@ class PillWidget extends WidgetType {
 	}
 }
 
+function isInsideCode(view: EditorView, pos: number): boolean {
+	let node = syntaxTree(view.state).resolve(pos, 1);
+	while (node) {
+		if (node.type.name.toLowerCase().includes("code")) return true;
+		if (!node.parent) break;
+		node = node.parent;
+	}
+	return false;
+}
+
 function buildDecorations(view: EditorView): DecorationSet {
 	const decorations: Range<Decoration>[] = [];
 	const pattern = /\{\{([^}]+)\}\}/g;
@@ -35,6 +46,8 @@ function buildDecorations(view: EditorView): DecorationSet {
 				r => r.from <= end && r.to >= start
 			);
 			if (cursorInside) continue;
+
+			if (isInsideCode(view, start)) continue;
 
 			decorations.push(
 				Decoration.replace({ widget: new PillWidget(match[1] ?? "") }).range(start, end)
