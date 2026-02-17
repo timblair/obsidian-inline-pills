@@ -1,19 +1,22 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
-import { Range } from "@codemirror/state";
+import { Range, StateEffect } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
+
+export const settingsChangedEffect = StateEffect.define<void>();
 import { createPillElement } from "./colour";
+import type { InlinePillsSettings } from "./settings";
 
 class PillWidget extends WidgetType {
-	constructor(readonly label: string) {
+	constructor(readonly label: string, readonly caseInsensitive: boolean) {
 		super();
 	}
 
 	eq(other: PillWidget): boolean {
-		return other.label === this.label;
+		return other.label === this.label && other.caseInsensitive === this.caseInsensitive;
 	}
 
 	toDOM(): HTMLElement {
-		return createPillElement(this.label);
+		return createPillElement(this.label, this.caseInsensitive);
 	}
 
 	ignoreEvent(): boolean {
@@ -31,9 +34,10 @@ function isInsideCode(view: EditorView, pos: number): boolean {
 	return false;
 }
 
-function buildDecorations(view: EditorView): DecorationSet {
+function buildDecorations(view: EditorView, getSettings: () => InlinePillsSettings): DecorationSet {
 	const decorations: Range<Decoration>[] = [];
 	const pattern = /\{\{([^}]+)\}\}/g;
+	const { caseInsensitive } = getSettings();
 
 	for (const { from, to } of view.visibleRanges) {
 		const text = view.state.doc.sliceString(from, to);
@@ -50,7 +54,7 @@ function buildDecorations(view: EditorView): DecorationSet {
 			if (isInsideCode(view, start)) continue;
 
 			decorations.push(
-				Decoration.replace({ widget: new PillWidget(match[1] ?? "") }).range(start, end)
+				Decoration.replace({ widget: new PillWidget(match[1] ?? "", caseInsensitive) }).range(start, end)
 			);
 		}
 	}
@@ -58,19 +62,24 @@ function buildDecorations(view: EditorView): DecorationSet {
 	return Decoration.set(decorations);
 }
 
-export const pillViewPlugin = ViewPlugin.fromClass(
-	class {
-		decorations: DecorationSet;
+export function createPillViewPlugin(getSettings: () => InlinePillsSettings) {
+	return ViewPlugin.fromClass(
+		class {
+			decorations: DecorationSet;
 
-		constructor(view: EditorView) {
-			this.decorations = buildDecorations(view);
-		}
-
-		update(update: ViewUpdate) {
-			if (update.docChanged || update.selectionSet || update.viewportChanged) {
-				this.decorations = buildDecorations(update.view);
+			constructor(view: EditorView) {
+				this.decorations = buildDecorations(view, getSettings);
 			}
-		}
-	},
-	{ decorations: v => v.decorations }
-);
+
+			update(update: ViewUpdate) {
+				const settingsChanged = update.transactions.some(t =>
+					t.effects.some(e => e.is(settingsChangedEffect))
+				);
+				if (update.docChanged || update.selectionSet || update.viewportChanged || settingsChanged) {
+					this.decorations = buildDecorations(update.view, getSettings);
+				}
+			}
+		},
+		{ decorations: v => v.decorations }
+	);
+}

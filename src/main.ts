@@ -1,10 +1,16 @@
-import { Plugin, MarkdownPostProcessorContext } from "obsidian";
+import { MarkdownView, Plugin, MarkdownPostProcessorContext } from "obsidian";
 import { createPillElement } from "./colour";
-import { pillViewPlugin } from "./editor-extension";
+import { createPillViewPlugin, settingsChangedEffect } from "./editor-extension";
+import { InlinePillsSettings, DEFAULT_SETTINGS, InlinePillsSettingTab } from "./settings";
 
 export default class InlinePillsPlugin extends Plugin {
+	settings: InlinePillsSettings;
+
 	async onload() {
-		this.registerEditorExtension(pillViewPlugin);
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.addSettingTab(new InlinePillsSettingTab(this.app, this));
+
+		this.registerEditorExtension(createPillViewPlugin(() => this.settings));
 
 		this.registerMarkdownPostProcessor(
 			(el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
@@ -22,7 +28,7 @@ export default class InlinePillsPlugin extends Plugin {
 							if (match.index > lastIndex) {
 								fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
 							}
-							fragment.appendChild(createPillElement(match[1] ?? ""));
+							fragment.appendChild(createPillElement(match[1] ?? "", this.settings.caseInsensitive));
 							lastIndex = match.index + match[0].length;
 						}
 						if (lastIndex < text.length) {
@@ -33,6 +39,22 @@ export default class InlinePillsPlugin extends Plugin {
 				}
 			}
 		);
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+		this.refreshAllViews();
+	}
+
+	refreshAllViews() {
+		this.app.workspace.iterateAllLeaves(leaf => {
+			if (!(leaf.view instanceof MarkdownView)) return;
+			// Re-render Reading view
+			leaf.view.previewMode?.rerender(true);
+			// Trigger Live Preview rebuild via StateEffect
+			const cm = (leaf.view.editor as any).cm;
+			if (cm) cm.dispatch({ effects: settingsChangedEffect.of(undefined) });
+		});
 	}
 
 	findTextNode(el: Node, search?: string): Node[] {
