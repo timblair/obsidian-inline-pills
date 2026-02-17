@@ -67,13 +67,25 @@ export function hashToHex(hash: number, saturation: number, lightness: number): 
 	return rgbToHex(...rgb);
 }
 
-export function createPillElement(label: string, caseInsensitive: boolean): HTMLElement {
+export function resolveColours(label: string, caseInsensitive: boolean): { bg: string, text: string } {
 	const hashKey = caseInsensitive ? label.toUpperCase() : label;
 	const hash = getHash(hashKey);
+	return {
+		bg: hashToHex(hash, ...PILL_DARK),
+		text: hashToHex(hash, ...PILL_LIGHT),
+	};
+}
+
+export function buildPillElement(label: string, bg: string, text: string): HTMLElement {
 	const span = document.createElement("span");
 	span.className = "inline-pill";
-	span.style.backgroundColor = hashToHex(hash, ...PILL_DARK);
-	span.style.color = hashToHex(hash, ...PILL_LIGHT);
+	span.style.backgroundColor = bg;
+	span.style.color = text;
 	span.textContent = label.toUpperCase();
 	return span;
+}
+
+export function createPillElement(label: string, caseInsensitive: boolean): HTMLElement {
+	const { bg, text } = resolveColours(label, caseInsensitive);
+	return buildPillElement(label, bg, text);
 }

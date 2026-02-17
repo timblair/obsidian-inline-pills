@@ -1,22 +1,22 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
 import { Range, StateEffect } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
-import { createPillElement, PILL_PATTERN } from "./colour";
+import { resolveColours, buildPillElement, PILL_PATTERN } from "./colour";
 import type { InlinePillsSettings } from "./settings";
 
 export const settingsChangedEffect = StateEffect.define<void>();
 
 class PillWidget extends WidgetType {
-	constructor(readonly label: string, readonly caseInsensitive: boolean) {
+	constructor(readonly label: string, readonly bgColour: string, readonly textColour: string) {
 		super();
 	}
 
 	eq(other: PillWidget): boolean {
-		return other.label === this.label && other.caseInsensitive === this.caseInsensitive;
+		return other.label === this.label && other.bgColour === this.bgColour && other.textColour === this.textColour;
 	}
 
 	toDOM(): HTMLElement {
-		return createPillElement(this.label, this.caseInsensitive);
+		return buildPillElement(this.label, this.bgColour, this.textColour);
 	}
 
 	ignoreEvent(): boolean {
@@ -36,7 +36,7 @@ function isInsideCode(view: EditorView, pos: number): boolean {
 
 function buildDecorations(view: EditorView, getSettings: () => InlinePillsSettings): DecorationSet {
 	const decorations: Range<Decoration>[] = [];
-	const { caseInsensitive } = getSettings();
+	const settings = getSettings();
 	PILL_PATTERN.lastIndex = 0;
 
 	for (const { from, to } of view.visibleRanges) {
@@ -53,8 +53,10 @@ function buildDecorations(view: EditorView, getSettings: () => InlinePillsSettin
 
 			if (isInsideCode(view, start)) continue;
 
+			const label = match[1] ?? "";
+			const { bg, text: textColour } = resolveColours(label, settings.caseInsensitive);
 			decorations.push(
-				Decoration.replace({ widget: new PillWidget(match[1] ?? "", caseInsensitive) }).range(start, end)
+				Decoration.replace({ widget: new PillWidget(label, bg, textColour) }).range(start, end)
 			);
 		}
 	}
