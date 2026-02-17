@@ -1,10 +1,10 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
 import { Range, StateEffect } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
-
-export const settingsChangedEffect = StateEffect.define<void>();
 import { createPillElement } from "./colour";
 import type { InlinePillsSettings } from "./settings";
+
+export const settingsChangedEffect = StateEffect.define<void>();
 
 class PillWidget extends WidgetType {
 	constructor(readonly label: string, readonly caseInsensitive: boolean) {
