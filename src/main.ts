@@ -1,5 +1,5 @@
-import { MarkdownView, Plugin, MarkdownPostProcessorContext } from "obsidian";
-import { createPillElement } from "./colour";
+import { MarkdownView, Plugin } from "obsidian";
+import { createPillElement, PILL_PATTERN } from "./colour";
 import { createPillViewPlugin, settingsChangedEffect } from "./editor-extension";
 import { InlinePillsSettings, DEFAULT_SETTINGS, InlinePillsSettingTab } from "./settings";
 
@@ -13,18 +13,18 @@ export default class InlinePillsPlugin extends Plugin {
 		this.registerEditorExtension(createPillViewPlugin(() => this.settings));
 
 		this.registerMarkdownPostProcessor(
-			(el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+			(el: HTMLElement) => {
 				if (el.innerText.includes("{{")) {
 					const nodeList = this.findTextNode(el, "{{");
 
 					nodeList.forEach(node => {
 						if (!node.parentElement) return;
 						const text = node.textContent ?? "";
-						const pattern = /\{\{([^}]+)\}\}/g;
 						const fragment = document.createDocumentFragment();
 						let lastIndex = 0;
 						let match;
-						while ((match = pattern.exec(text)) !== null) {
+						PILL_PATTERN.lastIndex = 0;
+						while ((match = PILL_PATTERN.exec(text)) !== null) {
 							if (match.index > lastIndex) {
 								fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
 							}

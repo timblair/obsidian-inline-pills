@@ -49,7 +49,7 @@ npm run lint
 src/
   main.ts              # Plugin entry point and lifecycle (onload, post-processor, settings wiring)
   editor-extension.ts  # CodeMirror 6 ViewPlugin for Live Preview rendering
-  colour.ts            # Hash → HSL → RGB → hex utilities, shared constants, createPillElement()
+  colour.ts            # Hash → HSL → RGB → hex utilities, shared constants, pill DOM factory functions
   settings.ts          # InlinePillsSettings interface, DEFAULT_SETTINGS, InlinePillsSettingTab
 styles.css             # .inline-pill styles
 manifest.json          # Plugin metadata
@@ -57,7 +57,7 @@ manifest.json          # Plugin metadata
 
 ## Plugin mechanics
 
-Pills are rendered in two contexts, both using `createPillElement(label, caseInsensitive)` from `colour.ts`:
+Pills are rendered in two contexts, both using functions from `colour.ts` for colour computation and DOM creation:
 
 ### Reading view (`main.ts`)
 
@@ -65,7 +65,7 @@ A `MarkdownPostProcessor` registered in `onload()`:
 
 1. Checks if the rendered element contains `{{`.
 2. Recursively finds all text nodes (via `findTextNode`) containing `{{`.
-3. Replaces `{{label}}` patterns with `createPillElement(label, caseInsensitive)`, passing current settings.
+3. Replaces `{{label}}` patterns with `createPillElement(label, caseInsensitive)` from `colour.ts`, which resolves colours and builds the DOM element in one call.
 
 ### Live Preview / editing view (`editor-extension.ts`)
 
@@ -73,16 +73,19 @@ A CodeMirror 6 `ViewPlugin` created by `createPillViewPlugin(getSettings)` and r
 
 1. On each document change, cursor move, viewport change, or `settingsChangedEffect` dispatch, scans visible ranges for `{{label}}` patterns.
 2. For each match, checks whether any cursor or selection overlaps the range.
-3. If the cursor is **outside** the range, replaces it with a `PillWidget` (renders via `createPillElement`).
+3. If the cursor is **outside** the range, resolves colours via `resolveColours(label, settings.caseInsensitive)` and creates a `PillWidget` storing the precomputed hex values; `PillWidget.toDOM()` calls `buildPillElement` directly.
 4. If the cursor is **inside** the range, the raw `{{label}}` text is shown for editing.
 
 ### Shared colour utilities (`colour.ts`)
 
-- `getHash(str)` → deterministic number from label text
-- `hashToHex(hash, saturation, lightness)` → hex colour string
-- `createPillElement(label, caseInsensitive)` → styled `<span class="inline-pill">` element; when `caseInsensitive` is true, normalises the label to uppercase before hashing so variants share a colour
+- `PILL_PATTERN` — shared regex `/\{\{([^}]+)\}\}/g` used by both the post-processor and the CM6 extension; always reset `PILL_PATTERN.lastIndex = 0` before each `while` loop (the `g` flag carries state)
 - `PILL_DARK: [0.5, 0.35]` — background colour (saturation, lightness)
 - `PILL_LIGHT: [0.9, 0.9]` — foreground colour (saturation, lightness)
+- `getHash(str)` → deterministic number from label text
+- `hashToHex(hash, saturation, lightness)` → hex colour string
+- `resolveColours(label, caseInsensitive)` → `{ bg, text }` — all colour computation; when `caseInsensitive` is true, normalises label to uppercase before hashing so variants share a colour
+- `buildPillElement(label, bg, text)` → styled `<span class="inline-pill">` element given precomputed hex colours; the single DOM factory — no colour logic here
+- `createPillElement(label, caseInsensitive)` → convenience wrapper combining `resolveColours` + `buildPillElement`; used by the Reading view post-processor
 
 ### Settings (`settings.ts`)
 
@@ -153,13 +156,16 @@ To test the plugin, add `{{SomeLabel}}` to any note. The text should render as a
 
 **Do**
 - Keep colour generation deterministic — the same label must always produce the same colour.
-- Use `createPillElement(label, caseInsensitive)` from `colour.ts` as the single source of truth for pill DOM creation.
-- Keep `PILL_DARK` and `PILL_LIGHT` constants in `colour.ts` — never duplicate them elsewhere.
+- Use `buildPillElement(label, bg, text)` from `colour.ts` as the single DOM factory — never create pill `<span>` elements elsewhere.
+- Use `resolveColours(label, caseInsensitive)` from `colour.ts` for all colour computation — never compute pill colours outside this function.
+- In the Reading view post-processor, use `createPillElement(label, caseInsensitive)` (which combines `resolveColours` + `buildPillElement`).
+- In the Live Preview extension, precompute colours via `resolveColours` in `buildDecorations` and pass the hex strings to `PillWidget` — do not pass settings objects or booleans into the widget.
+- Keep `PILL_DARK`, `PILL_LIGHT`, and `PILL_PATTERN` constants in `colour.ts` — never duplicate them elsewhere.
 - Use `this.registerMarkdownPostProcessor` for Reading view post-processing.
 - Use `this.registerEditorExtension` for Live Preview (CM6) extensions.
 - Add new settings to `InlinePillsSettings` in `settings.ts` with a matching entry in `DEFAULT_SETTINGS`.
 - Add the UI control for any new setting in `InlinePillsSettingTab.display()` in `settings.ts`, calling `await this.plugin.saveSettings()` in its `onChange` handler.
-- Thread new settings through to `createPillElement` and `createPillViewPlugin` — never read `plugin.settings` directly from `colour.ts` or `editor-extension.ts`.
+- Thread new settings through to `resolveColours` (via `buildDecorations` in `editor-extension.ts`) and to `createPillElement` (in `main.ts`) — never read `plugin.settings` directly from `colour.ts` or `editor-extension.ts`.
 - Write idempotent processing — reloading the plugin should not double-process already-rendered pills.
 - Use `this.register*` helpers for anything needing cleanup.
 - When modifying the CM6 extension, always rebuild (`npm run build`) and reload Obsidian to test — changes to `editor-extension.ts` are not reflected until `main.js` is rebuilt.
@@ -174,7 +180,7 @@ To test the plugin, add `{{SomeLabel}}` to any note. The text should render as a
 - Commit `main.js`, `node_modules/`, or `.hotreload`.
 - Change the plugin `id` in `manifest.json`.
 - Use `console.log` in production code — remove debug logging before release.
-- Duplicate pill DOM creation logic — always use `createPillElement()`.
+- Duplicate pill DOM creation logic — always use `buildPillElement()` for DOM construction and `resolveColours()` for colour computation.
 - Mark `@codemirror/*` packages as bundled dependencies — they must remain external (provided by Obsidian at runtime).
 - Use Node.js or Electron APIs (`fs`, `crypto`, `os`, etc.) — the plugin must remain mobile-compatible (`isDesktopOnly: false`).
 - Use lookbehind regex patterns — not supported on iOS.
