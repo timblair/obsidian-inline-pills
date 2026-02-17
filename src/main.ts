@@ -1,9 +1,15 @@
 import { Plugin, MarkdownPostProcessorContext } from "obsidian";
 import { createPillElement } from "./colour";
 import { pillViewPlugin } from "./editor-extension";
+import { InlinePillsSettings, DEFAULT_SETTINGS, InlinePillsSettingTab } from "./settings";
 
 export default class InlinePillsPlugin extends Plugin {
+	settings: InlinePillsSettings;
+
 	async onload() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.addSettingTab(new InlinePillsSettingTab(this.app, this));
+
 		this.registerEditorExtension(pillViewPlugin);
 
 		this.registerMarkdownPostProcessor(
@@ -33,6 +39,10 @@ export default class InlinePillsPlugin extends Plugin {
 				}
 			}
 		);
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 
 	findTextNode(el: Node, search?: string): Node[] {
