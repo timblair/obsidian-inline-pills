@@ -1,7 +1,7 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
 import { Range, StateEffect } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
-import { createPillElement } from "./colour";
+import { createPillElement, PILL_PATTERN } from "./colour";
 import type { InlinePillsSettings } from "./settings";
 
 export const settingsChangedEffect = StateEffect.define<void>();
@@ -36,13 +36,13 @@ function isInsideCode(view: EditorView, pos: number): boolean {
 
 function buildDecorations(view: EditorView, getSettings: () => InlinePillsSettings): DecorationSet {
 	const decorations: Range<Decoration>[] = [];
-	const pattern = /\{\{([^}]+)\}\}/g;
 	const { caseInsensitive } = getSettings();
+	PILL_PATTERN.lastIndex = 0;
 
 	for (const { from, to } of view.visibleRanges) {
 		const text = view.state.doc.sliceString(from, to);
 		let match;
-		while ((match = pattern.exec(text)) !== null) {
+		while ((match = PILL_PATTERN.exec(text)) !== null) {
 			const start = from + match.index;
 			const end = start + match[0].length;
 

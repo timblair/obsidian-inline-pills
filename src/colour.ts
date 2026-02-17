@@ -1,5 +1,6 @@
 export const PILL_DARK: [number, number] = [0.5, 0.35];
 export const PILL_LIGHT: [number, number] = [0.9, 0.9];
+export const PILL_PATTERN = /\{\{([^}]+)\}\}/g;
 
 export function mod(n: number, m: number): number {
 	return ((n % m) + m) % m;
