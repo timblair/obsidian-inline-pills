@@ -66,8 +66,9 @@ export function hashToHex(hash: number, saturation: number, lightness: number): 
 	return rgbToHex(...rgb);
 }
 
-export function createPillElement(label: string): HTMLElement {
-	const hash = getHash(label);
+export function createPillElement(label: string, caseInsensitive: boolean): HTMLElement {
+	const hashKey = caseInsensitive ? label.toUpperCase() : label;
+	const hash = getHash(hashKey);
 	const span = document.createElement("span");
 	span.className = "inline-pill";
 	span.style.backgroundColor = hashToHex(hash, ...PILL_DARK);
