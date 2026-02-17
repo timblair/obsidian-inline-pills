@@ -16,6 +16,16 @@ Each label is assigned a colour deterministically from its text, so the same lab
 
 Pills are rendered in both **Reading view** and **Live Preview** (editing) mode. In Live Preview, moving your cursor inside a `{{label}}` reveals the raw syntax for editing; moving away renders the pill again.
 
+## Settings
+
+Settings are available under **Settings → Community plugins → Inline Pills**.
+
+| Setting | Default | Description |
+|---|---|---|
+| Case-insensitive colours | Off | When enabled, labels that differ only in case (e.g. `todo` and `TODO`) are assigned the same colour. |
+
+Changes take effect immediately across all open notes — no reload required.
+
 ## Installation
 
 ### Via BRAT

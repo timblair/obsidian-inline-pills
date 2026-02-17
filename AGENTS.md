@@ -47,26 +47,17 @@ npm run lint
 
 ```
 src/
-  main.ts              # Plugin entry point and lifecycle (onload, post-processor registration)
+  main.ts              # Plugin entry point and lifecycle (onload, post-processor, settings wiring)
   editor-extension.ts  # CodeMirror 6 ViewPlugin for Live Preview rendering
   colour.ts            # Hash → HSL → RGB → hex utilities, shared constants, createPillElement()
+  settings.ts          # InlinePillsSettings interface, DEFAULT_SETTINGS, InlinePillsSettingTab
 styles.css             # .inline-pill styles
 manifest.json          # Plugin metadata
 ```
 
-### Suggested structure as the plugin grows
-
-```
-src/
-  main.ts              # Plugin entry point and lifecycle only
-  editor-extension.ts  # CM6 ViewPlugin for Live Preview
-  colour.ts            # Colour utilities and pill DOM factory
-  settings.ts          # Settings interface, defaults, and settings tab
-```
-
 ## Plugin mechanics
 
-Pills are rendered in two contexts, both using `createPillElement(label)` from `colour.ts`:
+Pills are rendered in two contexts, both using `createPillElement(label, caseInsensitive)` from `colour.ts`:
 
 ### Reading view (`main.ts`)
 
@@ -74,13 +65,13 @@ A `MarkdownPostProcessor` registered in `onload()`:
 
 1. Checks if the rendered element contains `{{`.
 2. Recursively finds all text nodes (via `findTextNode`) containing `{{`.
-3. Replaces `{{label}}` patterns in the parent element's `innerHTML` with `createPillElement(label).outerHTML`.
+3. Replaces `{{label}}` patterns with `createPillElement(label, caseInsensitive)`, passing current settings.
 
 ### Live Preview / editing view (`editor-extension.ts`)
 
-A CodeMirror 6 `ViewPlugin` registered via `this.registerEditorExtension()`:
+A CodeMirror 6 `ViewPlugin` created by `createPillViewPlugin(getSettings)` and registered via `this.registerEditorExtension()`. The factory accepts a `getSettings` callback (closure over `this.settings`) so the plugin always reads current settings at decoration-build time.
 
-1. On each document change, cursor move, or viewport change, scans visible ranges for `{{label}}` patterns.
+1. On each document change, cursor move, viewport change, or `settingsChangedEffect` dispatch, scans visible ranges for `{{label}}` patterns.
 2. For each match, checks whether any cursor or selection overlaps the range.
 3. If the cursor is **outside** the range, replaces it with a `PillWidget` (renders via `createPillElement`).
 4. If the cursor is **inside** the range, the raw `{{label}}` text is shown for editing.
@@ -89,9 +80,23 @@ A CodeMirror 6 `ViewPlugin` registered via `this.registerEditorExtension()`:
 
 - `getHash(str)` → deterministic number from label text
 - `hashToHex(hash, saturation, lightness)` → hex colour string
-- `createPillElement(label)` → styled `<span class="inline-pill">` element
+- `createPillElement(label, caseInsensitive)` → styled `<span class="inline-pill">` element; when `caseInsensitive` is true, normalises the label to uppercase before hashing so variants share a colour
 - `PILL_DARK: [0.5, 0.35]` — background colour (saturation, lightness)
 - `PILL_LIGHT: [0.9, 0.9]` — foreground colour (saturation, lightness)
+
+### Settings (`settings.ts`)
+
+- `InlinePillsSettings` — interface defining all user-configurable options
+- `DEFAULT_SETTINGS` — default values for every setting
+- `InlinePillsSettingTab` — `PluginSettingTab` subclass; renders the settings UI in **Settings → Inline Pills**
+
+Settings are loaded in `onload()` via `Object.assign({}, DEFAULT_SETTINGS, await this.loadData())` and saved via `saveSettings()`. Calling `saveSettings()` also calls `refreshAllViews()`, which dispatches `settingsChangedEffect` to every open CM6 editor and calls `previewMode.rerender(true)` on every open Reading view, so changes take effect immediately without reloading.
+
+**Available settings:**
+
+| Setting | Key | Type | Default | Description |
+|---|---|---|---|---|
+| Case-insensitive colours | `caseInsensitive` | `boolean` | `false` | When enabled, labels that differ only in case (e.g. `todo` and `TODO`) share the same colour |
 
 ## Manifest rules (`manifest.json`)
 
@@ -148,10 +153,13 @@ To test the plugin, add `{{SomeLabel}}` to any note. The text should render as a
 
 **Do**
 - Keep colour generation deterministic — the same label must always produce the same colour.
-- Use `createPillElement(label)` from `colour.ts` as the single source of truth for pill DOM creation.
+- Use `createPillElement(label, caseInsensitive)` from `colour.ts` as the single source of truth for pill DOM creation.
 - Keep `PILL_DARK` and `PILL_LIGHT` constants in `colour.ts` — never duplicate them elsewhere.
 - Use `this.registerMarkdownPostProcessor` for Reading view post-processing.
 - Use `this.registerEditorExtension` for Live Preview (CM6) extensions.
+- Add new settings to `InlinePillsSettings` in `settings.ts` with a matching entry in `DEFAULT_SETTINGS`.
+- Add the UI control for any new setting in `InlinePillsSettingTab.display()` in `settings.ts`, calling `await this.plugin.saveSettings()` in its `onChange` handler.
+- Thread new settings through to `createPillElement` and `createPillViewPlugin` — never read `plugin.settings` directly from `colour.ts` or `editor-extension.ts`.
 - Write idempotent processing — reloading the plugin should not double-process already-rendered pills.
 - Use `this.register*` helpers for anything needing cleanup.
 - When modifying the CM6 extension, always rebuild (`npm run build`) and reload Obsidian to test — changes to `editor-extension.ts` are not reflected until `main.js` is rebuilt.
