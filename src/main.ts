@@ -1,4 +1,4 @@
-import { MarkdownView, Plugin, MarkdownPostProcessorContext } from "obsidian";
+import { MarkdownView, Plugin } from "obsidian";
 import { createPillElement } from "./colour";
 import { createPillViewPlugin, settingsChangedEffect } from "./editor-extension";
 import { InlinePillsSettings, DEFAULT_SETTINGS, InlinePillsSettingTab } from "./settings";
@@ -13,7 +13,7 @@ export default class InlinePillsPlugin extends Plugin {
 		this.registerEditorExtension(createPillViewPlugin(() => this.settings));
 
 		this.registerMarkdownPostProcessor(
-			(el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+			(el: HTMLElement) => {
 				if (el.innerText.includes("{{")) {
 					const nodeList = this.findTextNode(el, "{{");
 
