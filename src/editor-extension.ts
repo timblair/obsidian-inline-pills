@@ -26,6 +26,11 @@ class PillWidget extends WidgetType {
 	}
 }
 
+function isCheckedTask(view: EditorView, pos: number): boolean {
+	const line = view.state.doc.lineAt(pos);
+	return /^\s*[-*+] \[x\]\s/i.test(line.text);
+}
+
 function isInsideStrikethrough(view: EditorView, pos: number): boolean {
 	let node = syntaxTree(view.state).resolve(pos, 1);
 	while (node) {
@@ -68,7 +73,7 @@ function buildDecorations(view: EditorView, getSettings: () => InlinePillsSettin
 
 			const label = match[1] ?? "";
 			const { bg, text: textColour } = resolveColours(label, settings.caseInsensitive);
-			const strikethrough = isInsideStrikethrough(view, start);
+			const strikethrough = isInsideStrikethrough(view, start) || isCheckedTask(view, start);
 			decorations.push(
 				Decoration.replace({ widget: new PillWidget(label, bg, textColour, strikethrough) }).range(start, end)
 			);

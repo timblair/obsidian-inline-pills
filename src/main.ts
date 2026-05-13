@@ -29,7 +29,7 @@ export default class InlinePillsPlugin extends Plugin {
 								fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
 							}
 							const pill = createPillElement(match[1] ?? "", this.settings.caseInsensitive);
-							if (node.parentElement?.closest("del")) pill.style.textDecoration = "line-through";
+							if (node.parentElement?.closest("del, .is-checked")) pill.style.textDecoration = "line-through";
 							fragment.appendChild(pill);
 							lastIndex = match.index + match[0].length;
 						}

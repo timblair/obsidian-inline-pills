@@ -41,6 +41,23 @@ Multiple strikethrough pills: ~~{{todo}} and {{done}}~~
 
 Non-strikethrough pill for comparison: {{todo}}
 
+## Checklists
+
+Checked item pill (should be struck through):
+- [x] {{done}} To-do like item one
+
+Unchecked item pill (should not be struck through):
+- [ ] {{todo}} To-do like item two
+
+Checked with multiple pills (both struck through):
+- [x] {{one}} and {{two}} both done
+
+Checked with asterisk (should be struck through):
+* [x] {{done}} asterisk item
+
+Checked with plus (should be struck through):
++ [x] {{done}} plus item
+
 ## Formatting Isolation (Pills Should NOT Inherit)
 
 Bold pill (should not be bold): **{{todo}}**

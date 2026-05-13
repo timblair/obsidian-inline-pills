@@ -66,6 +66,7 @@ A `MarkdownPostProcessor` registered in `onload()`:
 1. Checks if the rendered element contains `{{`.
 2. Recursively finds all text nodes (via `findTextNode`) containing `{{`.
 3. Replaces `{{label}}` patterns with `createPillElement(label, caseInsensitive)` from `colour.ts`, which resolves colours and builds the DOM element in one call.
+4. Applies `text-decoration: line-through` to pills inside strikethrough (`<del>`) or checked task (`.is-checked`) ancestors.
 
 ### Live Preview / editing view (`editor-extension.ts`)
 
@@ -75,6 +76,7 @@ A CodeMirror 6 `ViewPlugin` created by `createPillViewPlugin(getSettings)` and r
 2. For each match, checks whether any cursor or selection overlaps the range.
 3. If the cursor is **outside** the range, resolves colours via `resolveColours(label, settings.caseInsensitive)` and creates a `PillWidget` storing the precomputed hex values; `PillWidget.toDOM()` calls `buildPillElement` directly.
 4. If the cursor is **inside** the range, the raw `{{label}}` text is shown for editing.
+5. Applies `text-decoration: line-through` to pills inside `~~strikethrough~~` markup (detected via `isInsideStrikethrough`, which walks the syntax tree) or checked task lines (detected via `isCheckedTask`, which matches the line text against `- [x]`/`* [x]`/`+ [x]`).
 
 ### Shared colour utilities (`colour.ts`)
 
