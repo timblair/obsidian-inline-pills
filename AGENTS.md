@@ -78,7 +78,7 @@ A CodeMirror 6 `ViewPlugin` created by `createPillViewPlugin(getSettings)` and r
 
 ### Shared colour utilities (`colour.ts`)
 
-- `PILL_PATTERN` — shared regex `/\{\{([^}]+)\}\}/g` used by both the post-processor and the CM6 extension; always reset `PILL_PATTERN.lastIndex = 0` before each `while` loop (the `g` flag carries state)
+- `PILL_PATTERN` — shared regex `/\{\{(.+?)\}\}(?!\})/g` used by both the post-processor and the CM6 extension; the lazy `.+?` with `(?!\})` lookahead ensures nested braces like `{{outer {{inner}}}}` match the outermost pair; always reset `PILL_PATTERN.lastIndex = 0` before each `while` loop (the `g` flag carries state)
 - `PILL_DARK: [0.5, 0.35]` — background colour (saturation, lightness)
 - `PILL_LIGHT: [0.9, 0.9]` — foreground colour (saturation, lightness)
 - `getHash(str)` → deterministic number from label text

@@ -13,7 +13,7 @@ Multiple pills on one line: {{todo}} {{done}} {{in-progress}}
 
 Pill with spaces: {{my label}}
 
-Empty pill: {{}}
+Empty pill (should not render): {{}}
 
 ## Colour Consistency
 
@@ -91,7 +91,7 @@ Pill at end of line: {{end}}
 
 Unclosed syntax (should not render): {{unclosed
 
-Nested braces: {{outer {{inner}}}}
+Nested braces (should render outer pill containing literal inner braces): {{outer {{inner}}}}
 
 Pill inside a blockquote:
 > {{quoted}}
