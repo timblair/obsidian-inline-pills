@@ -41,15 +41,27 @@ Multiple strikethrough pills: ~~{{todo}} and {{done}}~~
 
 Non-strikethrough pill for comparison: {{todo}}
 
+## Formatting Isolation (Pills Should NOT Inherit)
+
+Bold pill (should not be bold): **{{todo}}**
+
+Italic pill (should not be italic): *{{todo}}*
+
+Bold italic pill (should not be bold or italic): ***{{todo}}***
+
+Bold with surrounding text: **some bold {{todo}} text**
+
+Italic with surrounding text: *some italic {{todo}} text*
+
 ## Strikethrough with Other Formatting
 
-Bold strikethrough pill: **~~{{todo}}~~**
+Bold strikethrough pill (strikethrough only, not bold): **~~{{todo}}~~**
 
-Italic strikethrough pill: *~~{{todo}}~~*
+Italic strikethrough pill (strikethrough only, not italic): *~~{{todo}}~~*
 
-Bold italic strikethrough pill: ***~~{{todo}}~~***
+Bold italic strikethrough pill (strikethrough only): ***~~{{todo}}~~***
 
-Strikethrough inside bold: **~~{{todo}}~~ and {{done}}**
+Strikethrough inside bold (first pill strikethrough only, second pill plain): **~~{{todo}}~~ and {{done}}**
 
 ## Pills Inside Code (Should NOT Render)
 
