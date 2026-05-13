@@ -28,7 +28,9 @@ export default class InlinePillsPlugin extends Plugin {
 							if (match.index > lastIndex) {
 								fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
 							}
-							fragment.appendChild(createPillElement(match[1] ?? "", this.settings.caseInsensitive));
+							const pill = createPillElement(match[1] ?? "", this.settings.caseInsensitive);
+							if (node.parentElement?.closest("del")) pill.style.textDecoration = "line-through";
+							fragment.appendChild(pill);
 							lastIndex = match.index + match[0].length;
 						}
 						if (lastIndex < text.length) {

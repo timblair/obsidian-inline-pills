@@ -7,21 +7,34 @@ import type { InlinePillsSettings } from "./settings";
 export const settingsChangedEffect = StateEffect.define<void>();
 
 class PillWidget extends WidgetType {
-	constructor(readonly label: string, readonly bgColour: string, readonly textColour: string) {
+	constructor(readonly label: string, readonly bgColour: string, readonly textColour: string, readonly strikethrough: boolean) {
 		super();
 	}
 
 	eq(other: PillWidget): boolean {
-		return other.label === this.label && other.bgColour === this.bgColour && other.textColour === this.textColour;
+		return other.label === this.label && other.bgColour === this.bgColour && other.textColour === this.textColour && other.strikethrough === this.strikethrough;
 	}
 
 	toDOM(): HTMLElement {
-		return buildPillElement(this.label, this.bgColour, this.textColour);
+		const el = buildPillElement(this.label, this.bgColour, this.textColour);
+		if (this.strikethrough) el.style.textDecoration = "line-through";
+		return el;
 	}
 
 	ignoreEvent(): boolean {
 		return false;
 	}
+}
+
+function isInsideStrikethrough(view: EditorView, pos: number): boolean {
+	let node = syntaxTree(view.state).resolve(pos, 1);
+	while (node) {
+		const name = node.type.name.toLowerCase();
+		if (name.includes("strikethrough") && !name.includes("formatting")) return true;
+		if (!node.parent) break;
+		node = node.parent;
+	}
+	return false;
 }
 
 function isInsideCode(view: EditorView, pos: number): boolean {
@@ -55,8 +68,9 @@ function buildDecorations(view: EditorView, getSettings: () => InlinePillsSettin
 
 			const label = match[1] ?? "";
 			const { bg, text: textColour } = resolveColours(label, settings.caseInsensitive);
+			const strikethrough = isInsideStrikethrough(view, start);
 			decorations.push(
-				Decoration.replace({ widget: new PillWidget(label, bg, textColour) }).range(start, end)
+				Decoration.replace({ widget: new PillWidget(label, bg, textColour, strikethrough) }).range(start, end)
 			);
 		}
 	}
